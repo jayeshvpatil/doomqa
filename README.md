@@ -1,6 +1,6 @@
 # doomqa: agentic end-to-end testing demo on Freedoom / ViZDoom
 
-A small, working version of the agent-based QA harness from the IG Labs proposal, pointed at a real
+A small, working version of the agent-based QA harness, pointed at a real
 open-source shooter: **Freedoom: Phase 2** running headless in **ViZDoom 1.3.2**.
 
 ## What's in here
