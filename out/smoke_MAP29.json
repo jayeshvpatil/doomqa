@@ -1,0 +1,1 @@
+{"map": "MAP29", "checks": {"spawn": true, "movement": true, "weapon_fires": true, "use": true, "invariants": true, "no_crash": true}, "ok": true, "boot_s": 0.31, "monsters": 97, "pickups": 179, "keys": ["blueskull", "redskull", "yellowskull"], "sectors": 131, "lines": 1630, "tics_per_s": 2090, "violations": []}

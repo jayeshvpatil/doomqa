@@ -1,0 +1,1 @@
+{"map": "MAP21", "checks": {"spawn": true, "movement": true, "weapon_fires": true, "use": true, "invariants": true, "no_crash": true}, "ok": true, "boot_s": 0.23, "monsters": 81, "pickups": 116, "keys": ["yellowskull"], "sectors": 196, "lines": 1958, "tics_per_s": 2398, "violations": []}

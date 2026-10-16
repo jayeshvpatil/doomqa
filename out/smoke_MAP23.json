@@ -1,0 +1,1 @@
+{"map": "MAP23", "checks": {"spawn": true, "movement": true, "weapon_fires": true, "use": true, "invariants": true, "no_crash": true}, "ok": true, "boot_s": 0.3, "monsters": 219, "pickups": 166, "keys": ["redskull", "yellowcard"], "sectors": 539, "lines": 4806, "tics_per_s": 914, "violations": []}

@@ -1,0 +1,1 @@
+{"map": "MAP31", "checks": {"spawn": true, "movement": true, "weapon_fires": true, "use": true, "invariants": true, "no_crash": true}, "ok": true, "boot_s": 0.18, "monsters": 17, "pickups": 11, "keys": ["redcard"], "sectors": 86, "lines": 937, "tics_per_s": 5062, "violations": []}

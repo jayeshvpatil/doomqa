@@ -1,0 +1,1 @@
+{"map": "MAP11", "checks": {"spawn": true, "movement": true, "weapon_fires": true, "use": true, "invariants": true, "no_crash": true}, "ok": true, "boot_s": 0.37, "monsters": 267, "pickups": 374, "keys": ["bluecard", "blueskull", "redcard", "redskull", "yellowcard", "yellowskull"], "sectors": 648, "lines": 6533, "tics_per_s": 687, "violations": []}

@@ -1,0 +1,124 @@
+{
+ "MAP02-random-001": {
+  "pos": [
+   1299,
+   -1173,
+   -96
+  ],
+  "monsters": [
+   [
+    "Demon",
+    50
+   ],
+   [
+    "Demon",
+    51
+   ],
+   [
+    "Demon",
+    51
+   ],
+   [
+    "Demon",
+    53
+   ],
+   [
+    "Demon",
+    92
+   ]
+  ],
+  "probe": 1.5,
+  "after_wait": 1.5
+ },
+ "MAP02-random-002": {
+  "pos": [
+   1680,
+   -456,
+   -88
+  ],
+  "monsters": [
+   [
+    "Demon",
+    49
+   ],
+   [
+    "Demon",
+    53
+   ],
+   [
+    "Demon",
+    96
+   ]
+  ],
+  "probe": 1.7,
+  "after_wait": 1.7
+ },
+ "MAP04-random-001": {
+  "pos": [
+   337,
+   90,
+   -112
+  ],
+  "monsters": [
+   [
+    "DoomImp",
+    38
+   ],
+   [
+    "DoomImp",
+    51
+   ]
+  ],
+  "probe": 0.4,
+  "after_wait": 0.4
+ },
+ "MAP05-random-001": {
+  "pos": [
+   -235,
+   -237,
+   -128
+  ],
+  "monsters": [
+   [
+    "Spectre",
+    72
+   ]
+  ],
+  "probe": 4.8,
+  "after_wait": 29.5
+ },
+ "MAP05-random-002": {
+  "pos": [
+   -1,
+   -246,
+   -128
+  ],
+  "monsters": [
+   [
+    "DoomImp",
+    50
+   ],
+   [
+    "DoomImp",
+    89
+   ]
+  ],
+  "probe": 0.7,
+  "after_wait": 0.7
+ },
+ "MAP06-goexplore-001": {
+  "pos": [
+   -473,
+   215,
+   0
+  ],
+  "monsters": [
+   [
+    "ShotgunGuy",
+    41
+   ]
+  ],
+  "probe": 5.5,
+  "after_wait": 32.9
+ }
+}

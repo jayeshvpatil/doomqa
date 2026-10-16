@@ -1,0 +1,1 @@
+{"map": "MAP30", "checks": {"spawn": true, "movement": true, "weapon_fires": true, "use": true, "invariants": true, "no_crash": true}, "ok": true, "boot_s": 0.24, "monsters": 10, "pickups": 78, "keys": [], "sectors": 27, "lines": 464, "tics_per_s": 7166, "violations": []}

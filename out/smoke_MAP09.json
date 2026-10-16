@@ -1,0 +1,1 @@
+{"map": "MAP09", "checks": {"spawn": true, "movement": true, "weapon_fires": true, "use": true, "invariants": true, "no_crash": true}, "ok": true, "boot_s": 0.29, "monsters": 140, "pickups": 177, "keys": ["bluecard", "redcard", "yellowcard"], "sectors": 347, "lines": 3442, "tics_per_s": 1411, "violations": []}

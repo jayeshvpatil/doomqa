@@ -1,0 +1,1 @@
+{"map": "MAP19", "checks": {"spawn": true, "movement": true, "weapon_fires": true, "use": true, "invariants": true, "no_crash": true}, "ok": true, "boot_s": 0.33, "monsters": 146, "pickups": 79, "keys": ["bluecard", "redcard", "yellowcard"], "sectors": 289, "lines": 3205, "tics_per_s": 1366, "violations": []}

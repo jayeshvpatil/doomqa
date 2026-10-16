@@ -1,0 +1,30 @@
+{
+ "MAP03-random-001": {
+  "monsters": [
+   [
+    "Demon",
+    51
+   ],
+   [
+    "Demon",
+    52
+   ]
+  ],
+  "probe_real_turns": 1.7,
+  "probe_after_10s": 1.7
+ },
+ "MAP04-random-001": {
+  "monsters": [
+   [
+    "Demon",
+    48
+   ],
+   [
+    "Demon",
+    51
+   ]
+  ],
+  "probe_real_turns": 2.1,
+  "probe_after_10s": 2.1
+ }
+}

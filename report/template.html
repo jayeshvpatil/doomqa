@@ -1,0 +1,391 @@
+<title>Freedoom QA Run</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one run report — header, run summary, tickets, then the evidence (coverage race, transitions, smoke matrix, clip). Single dark look in the IG Labs skin. */
+:root {
+  color-scheme: dark;
+  --bg: #05060a; --panel: #0d0f16; --panel2: #12141c; --line: #1e2230; --line2: #2b2f3c;
+  --fg: #f4f6fa; --body: #a3abb9; --muted: #6f7688;
+  --mag: #ff0069; --cyan: #00d6f2; --gold: #ffd700; --mint: #3ddc97; --pink: #ff99c3;
+  --ok: #3ddc97; --warn: #ffd700; --bad: #ff0069; --info: #00d6f2;
+  --f-ui: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
+}
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.55; margin: 0;
+  background-image: radial-gradient(900px 600px at 0% 100%, rgba(255,0,105,.10), transparent 70%), radial-gradient(800px 500px at 100% 0%, rgba(0,214,242,.08), transparent 70%);
+  background-attachment: fixed; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: #07080d }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 72px }
+nav.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: #07080dee; backdrop-filter: blur(8px); border-bottom: 1px solid var(--line) }
+nav.top .in { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: 22px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; overflow-x: auto }
+.dots { display: flex; gap: 6px } .dots i { width: 9px; height: 9px; border-radius: 50%; display: block }
+.brand { font-weight: 600; white-space: nowrap }
+nav.top a { color: var(--body); text-decoration: none; font-size: 13px; white-space: nowrap; padding: 6px 10px; border-radius: 8px }
+nav.top a:hover, nav.top a:focus-visible { color: var(--fg); background: var(--panel2); outline: none }
+nav.top a span { color: var(--muted); margin-right: 6px; font-family: var(--f-mono); font-size: 11px }
+.eyebrow { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); font-weight: 600 }
+h1 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 500; letter-spacing: -.02em; line-height: 1.1; margin: 10px 0 14px; text-wrap: balance }
+h2 { font-size: clamp(22px, 2.6vw, 28px); font-weight: 500; letter-spacing: -.01em; margin: 6px 0 8px; text-wrap: balance }
+h3 { font-size: 16px; font-weight: 600; margin: 0 }
+p { margin: 0 } .lede { color: var(--body); max-width: 70ch; font-size: 16px }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums }
+section { padding-top: 56px; scroll-margin-top: 70px }
+.sec-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; max-width: 78ch }
+.sec-head p { color: var(--body) }
+header.hero { padding-top: 44px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: end }
+.runmeta { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 13px; color: var(--body); border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 16px 18px }
+.runmeta b { color: var(--muted); font-weight: 500 }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 32px }
+.tile { border-top: 2px solid var(--c, var(--cyan)); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0 }
+.tile .n { font-size: 34px; font-weight: 600; color: var(--c); line-height: 1.1; font-variant-numeric: tabular-nums }
+.tile .l { color: var(--body); font-size: 13px }
+/* tickets */
+.tickets { display: flex; flex-direction: column; gap: 14px }
+.ticket { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px }
+.ticket.closed { opacity: .82 }
+.t-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px }
+.chip { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap }
+.chip.high { color: var(--bad) } .chip.med { color: var(--warn) } .chip.low { color: var(--info) } .chip.info { color: var(--body) }
+.chip.ok { color: var(--ok) } .chip.no { color: var(--bad) } .chip.closed { color: var(--muted) }
+.tid { font-family: var(--f-mono); font-size: 12px; color: var(--muted) }
+.ticket h3 { font-size: 17px; margin-bottom: 6px }
+.ticket .what { color: var(--body); max-width: 72ch }
+.kv { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 14px; margin-top: 12px; font-size: 13px }
+.kv dt { color: var(--muted) } .kv dd { margin: 0; color: var(--fg); min-width: 0; overflow-wrap: anywhere }
+.ticket figure { margin: 0; display: flex; flex-direction: column; gap: 6px }
+.ticket figure img { width: 100%; border-radius: 8px; border: 1px solid var(--line2); image-rendering: pixelated; background: #000 }
+.ticket figcaption { font-size: 12px; color: var(--muted) }
+pre.code { background: #08090e; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-family: var(--f-mono); font-size: 12px; color: var(--light, #dce7ee); overflow-x: auto; margin: 8px 0 0; white-space: pre }
+.ev { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px }
+.ev span { font-family: var(--f-mono); font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--panel2); border: 1px solid var(--line) }
+.ev span.z { color: var(--bad); border-color: #5a1030 }
+/* coverage */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px }
+.tabs button, .ctl button { font: inherit; font-size: 13px; color: var(--body); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer }
+.tabs button[aria-selected="true"] { color: var(--fg); border-color: var(--mag); background: #1a0711 }
+.tabs button:focus-visible, .ctl button:focus-visible, input[type=range]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px }
+.race { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px }
+.pane { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.pane-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap }
+.pane-h .who { font-weight: 600 } .pane-h .who i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: 0 }
+.pane-h .pct { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums }
+canvas.map { width: 100%; aspect-ratio: 1 / 1; background: #07080d; border-radius: 10px; border: 1px solid var(--line); display: block; max-width: 100% }
+.pane-f { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--body) }
+.ctl { display: flex; align-items: center; gap: 12px; margin: 14px 0 6px; flex-wrap: wrap }
+.ctl input[type=range] { flex: 1; min-width: 160px; accent-color: var(--mag) }
+.ctl .t { font-family: var(--f-mono); font-size: 13px; color: var(--body); min-width: 150px }
+.chart { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-top: 14px }
+.chart svg { width: 100%; height: auto; display: block }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--body); flex-wrap: wrap }
+.legend i { display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; border-radius: 2px }
+.cmp { overflow-x: auto; margin-top: 14px }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap }
+th { color: var(--gold); font-weight: 600; font-size: 12px; letter-spacing: .04em }
+td.num, th.num { text-align: right }
+.win { color: var(--mint) } .lose { color: var(--pink) }
+/* transitions */
+.two { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px }
+.graph { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px; overflow-x: auto }
+.graph svg { width: 100%; min-width: 520px; height: auto; display: block }
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0 }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-width: 0 }
+.card p { color: var(--body) }
+.bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 8px 0 4px }
+.bar i { display: block; height: 100%; background: var(--cyan) }
+ul.plain { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--body) }
+/* smoke */
+.smoke { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px }
+.smoke table td, .smoke table th { padding: 7px 10px }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); margin-right: 3px }
+.dot.f { background: var(--bad) }
+.tbar { display: inline-block; height: 7px; border-radius: 3px; background: var(--cyan); vertical-align: middle; margin-right: 8px }
+tr.slow td { color: var(--gold) }
+.clip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: center }
+.clip img { width: 100%; border-radius: 12px; border: 1px solid var(--line2); image-rendering: pixelated; background: #000 }
+.map-to { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px }
+.map-to .card h3 { margin-bottom: 6px }
+.map-to .card .tag { font-size: 12px; color: var(--muted); margin-bottom: 8px; display: block }
+footer { margin-top: 56px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 6px }
+@media (max-width: 900px) {
+  header.hero, .two, .clip { grid-template-columns: minmax(0, 1fr) }
+  .ticket { grid-template-columns: minmax(0, 1fr) }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .map-to { grid-template-columns: minmax(0, 1fr) }
+}
+@media (max-width: 640px) { .race { grid-template-columns: minmax(0, 1fr) } .kv { grid-template-columns: minmax(0, 1fr) } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important } }
+</style>
+
+<nav class="top" aria-label="Sections"><div class="in">
+  <div class="dots" aria-hidden="true"><i style="background:var(--cyan)"></i><i style="background:var(--gold)"></i><i style="background:var(--mag)"></i></div>
+  <div class="brand">IG Labs</div>
+  <a href="#findings"><span>01</span>Findings</a>
+  <a href="#coverage"><span>02</span>Coverage race</a>
+  <a href="#states"><span>03</span>State model</a>
+  <a href="#smoke"><span>04</span>Smoke matrix</a>
+  <a href="#clip"><span>05</span>Replay</a>
+  <a href="#mapping"><span>06</span>What this proves</a>
+</div></nav>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">IG Labs · Agentic QA demo</div>
+      <h1>We pointed the agent harness at a real open-source shooter</h1>
+      <p class="lede" id="lede"></p>
+    </div>
+    <dl class="runmeta" id="runmeta"></dl>
+  </header>
+  <div class="tiles" id="tiles"></div>
+
+  <section id="findings">
+    <div class="sec-head">
+      <div class="eyebrow">01 · Findings</div>
+      <h2>What the agents found, after triage</h2>
+      <p id="candtext">Every candidate was re-run in a fresh game process before it became a ticket.</p>
+    </div>
+    <div class="tickets" id="tickets"></div>
+  </section>
+
+  <section id="coverage">
+    <div class="sec-head">
+      <div class="eyebrow">02 · Coverage race</div>
+      <h2>Curiosity agent vs. random walk, same budget</h2>
+      <p>The maps below show seed 1; the table averages all seeds. Both agents get the same number of game tics and the same action style. The curiosity agent keeps an archive of save states and goes back to the cells it has visited least (Go-Explore with a count-based novelty weight). Press play or drag the timeline.</p>
+    </div>
+    <div class="tabs" role="tablist" id="maptabs"></div>
+    <div class="race">
+      <div class="pane"><div class="pane-h"><span class="who"><i style="background:var(--cyan)"></i>Curiosity agent</span><span class="pct mono" id="pct-ge" style="color:var(--cyan)"></span></div>
+        <canvas class="map" id="cv-ge" width="900" height="900" aria-label="Map coverage by the curiosity agent"></canvas>
+        <div class="pane-f" id="foot-ge"></div></div>
+      <div class="pane"><div class="pane-h"><span class="who"><i style="background:var(--mag)"></i>Random walk</span><span class="pct mono" id="pct-rnd" style="color:var(--mag)"></span></div>
+        <canvas class="map" id="cv-rnd" width="900" height="900" aria-label="Map coverage by the random-walk agent"></canvas>
+        <div class="pane-f" id="foot-rnd"></div></div>
+    </div>
+    <div class="ctl">
+      <button id="play" type="button">Play</button>
+      <input id="scrub" type="range" min="0" max="1000" value="1000" aria-label="Timeline">
+      <span class="t" id="tlabel"></span>
+    </div>
+    <div class="chart"><div class="legend"><span><i style="background:var(--cyan)"></i>Curiosity agent</span><span><i style="background:var(--mag)"></i>Random walk</span><span style="color:var(--muted)">Share of map cells reached vs. game time</span></div><svg id="curve" viewBox="0 0 1000 240" role="img" aria-label="Coverage over time"></svg></div>
+    <div class="cmp"><table id="cmp"></table></div>
+    <p class="lede" id="covnote" style="margin-top:14px;font-size:14px"></p>
+  </section>
+
+  <section id="states">
+    <div class="sec-head">
+      <div class="eyebrow">03 · State model</div>
+      <h2>Which player-state transitions the combat bot exercised</h2>
+      <p>The combat bot plays without god mode: it aims at visible monsters and fires, and otherwise roams. Every step is classified into a player state, and each change of state is counted against the transitions a designer would expect to see.</p>
+    </div>
+    <div class="two">
+      <div class="graph"><svg id="sgraph" viewBox="0 0 760 470" role="img" aria-label="Player state transition graph"></svg></div>
+      <div class="side" id="sside"></div>
+    </div>
+  </section>
+
+  <section id="smoke">
+    <div class="sec-head">
+      <div class="eyebrow">04 · Smoke matrix</div>
+      <h2>All 32 maps boot, spawn, move, fire and hold invariants</h2>
+      <p>The scripted bot runs each map for about 20 seconds of game time. Throughput was measured afterwards, one map at a time. The first, parallel run had flagged MAP28 as five times slower than the median; measured on its own it sits in the normal range, so there is no performance ticket.</p>
+    </div>
+    <div class="smoke"><table id="smoketab"></table></div>
+  </section>
+
+  <section id="clip">
+    <div class="clip">
+      <div><img id="clipimg" alt="Combat bot playing MAP02, replayed from its recorded demo"></div>
+      <div class="sec-head" style="margin:0">
+        <div class="eyebrow">05 · Replay</div>
+        <h2>Every combat run is recorded as an engine demo</h2>
+        <p id="cliptext"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="mapping">
+    <div class="sec-head">
+      <div class="eyebrow">06 · What this proves</div>
+      <h2>How the demo maps to the proposal for [Client]</h2>
+    </div>
+    <div class="map-to" id="mapto"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const D = __DATA__;
+const $ = s => document.querySelector(s);
+const fmt = n => n.toLocaleString('en-US');
+const pct = v => (v * 100).toFixed(1) + '%';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---------- hero
+$('#lede').textContent = D.run.lede;
+$('#candtext').textContent = `Every candidate was re-run in a fresh game process before it became a ticket. ${D.cand.total} candidates came out of the runs; ${D.cand.closed} were closed in triage (${D.cand.closed - 1} test artifacts and one bug in our own checks) and are listed below so you can see why.`;
+$('#covnote').textContent = D.covnote;
+$('#runmeta').innerHTML = D.run.meta.map(([k, v]) => `<b>${esc(k)}</b><span>${esc(v)}</span>`).join('');
+$('#tiles').innerHTML = D.tiles.map(t => `<div class="tile" style="--c:var(--${t.c})"><span class="n">${esc(t.n)}</span><span class="l">${esc(t.l)}</span></div>`).join('');
+
+// ---------- tickets
+$('#tickets').innerHTML = D.tickets.map(t => `
+  <article class="ticket ${t.status === 'closed' ? 'closed' : ''}">
+    <div>
+      <div class="t-top"><span class="chip ${t.sev}">${esc(t.sevLabel)}</span><span class="chip ${t.repro_ok ? 'ok' : (t.status === 'closed' ? 'closed' : 'no')}">${esc(t.reproLabel)}</span><span class="tid">${esc(t.id)} · ${esc(t.area)}</span></div>
+      <h3>${esc(t.title)}</h3>
+      <p class="what">${esc(t.what)}</p>
+      ${t.evidence ? `<div class="ev">${t.evidence.map(e => `<span class="${e[1] ? 'z' : ''}">${esc(e[0])}</span>`).join('')}</div>` : ''}
+      <dl class="kv">${t.kv.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+      ${t.code ? `<pre class="code">${esc(t.code)}</pre>` : ''}
+    </div>
+    ${t.shot ? `<figure><img src="${t.shot}" alt="${esc(t.shotAlt || t.title)}" loading="lazy"><figcaption>${esc(t.shotCap || '')}</figcaption></figure>` : `<div></div>`}
+  </article>`).join('');
+
+// ---------- coverage race
+const maps = Object.keys(D.maps);
+let cur = maps[0], T = 1, playing = false, raf = 0;
+$('#maptabs').innerHTML = maps.map(m => `<button role="tab" type="button" aria-selected="${m === cur}" data-m="${m}">${m}</button>`).join('');
+$('#maptabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cur = b.dataset.m; [...$('#maptabs').children].forEach(x => x.setAttribute('aria-selected', x.dataset.m === cur)); T = 1; $('#scrub').value = 1000; draw(); });
+
+function setup(cv, geo) {
+  const ctx = cv.getContext('2d'), W = cv.width, H = cv.height, pad = 30;
+  const [x0, y0, x1, y1] = geo.bounds, s = Math.min((W - 2 * pad) / (x1 - x0), (H - 2 * pad) / (y1 - y0));
+  const ox = (W - (x1 - x0) * s) / 2, oy = (H - (y1 - y0) * s) / 2;
+  const X = x => ox + (x - x0) * s, Y = y => H - (oy + (y - y0) * s);
+  return { ctx, W, H, X, Y, s, x0, y0 };
+}
+function render(cv, geo, run, color, frac) {
+  const g = setup(cv, geo), { ctx, W, H, X, Y, s } = g, cs = geo.cell * s, tmax = frac * D.budget;
+  ctx.clearRect(0, 0, W, H);
+  // walkable cells faint
+  ctx.fillStyle = '#10131b';
+  for (const [cx, cy] of geo.walkable_cells) ctx.fillRect(X(g.x0 + cx * geo.cell), Y(g.y0 + (cy + 1) * geo.cell), cs, cs);
+  // reached cells, brighter = earlier
+  let n = 0;
+  for (const [t, cx, cy] of run.events) {
+    if (t > tmax) break;
+    n++;
+    const age = 1 - t / Math.max(1, tmax);
+    ctx.globalAlpha = .28 + .5 * age;
+    ctx.fillStyle = color;
+    ctx.fillRect(X(g.x0 + cx * geo.cell) + .5, Y(g.y0 + (cy + 1) * geo.cell) + .5, cs - 1, cs - 1);
+  }
+  ctx.globalAlpha = 1;
+  // walls
+  ctx.lineWidth = 1.4;
+  for (const [a, b, c, d, blk] of geo.lines) {
+    ctx.strokeStyle = blk ? '#c9d2df' : '#3a4152';
+    ctx.beginPath(); ctx.moveTo(X(a), Y(b)); ctx.lineTo(X(c), Y(d)); ctx.stroke();
+  }
+  // unreached pickups (only at end)
+  if (frac >= 1) for (const p of run.unreached) { ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 5, 0, 7); ctx.stroke(); }
+  // findings
+  for (const f of run.findings) if (f.tic <= tmax) {
+    ctx.strokeStyle = f.closed ? '#6f7688' : '#ff0069'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), 16, 0, 7); ctx.stroke();
+    ctx.fillStyle = f.closed ? '#6f7688' : '#ff0069'; ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), 5, 0, 7); ctx.fill();
+  }
+  // exits
+  for (const e of run.exits) if (e.tic <= tmax && e.x != null) { ctx.fillStyle = '#ffd700'; ctx.font = '600 22px Manrope, sans-serif'; ctx.fillText('EXIT', X(e.x) + 10, Y(e.y) - 10); }
+  return n;
+}
+function curve(m) {
+  const svg = $('#curve'), W = 1000, H = 240, L = 46, R = 12, Tp = 12, B = 30, mm = D.maps[m];
+  const x = t => L + (t / D.budget) * (W - L - R), y = v => Tp + (1 - v) * (H - Tp - B);
+  let out = '';
+  for (const v of [0, .25, .5, .75, 1]) out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#1e2230"/><text x="${L - 8}" y="${y(v) + 4}" fill="#6f7688" font-size="11" text-anchor="end" font-family="JetBrains Mono, monospace">${v * 100}%</text>`;
+  const hours = D.budget / 35 / 3600;
+  for (let i = 0; i <= 4; i++) { const t = D.budget * i / 4; out += `<text x="${x(t)}" y="${H - 8}" fill="#6f7688" font-size="11" text-anchor="${i === 4 ? 'end' : (i === 0 ? 'start' : 'middle')}" font-family="JetBrains Mono, monospace">${(hours * i / 4 * 60).toFixed(0)} min</text>`; }
+  for (const [k, col] of [['ge', '#00d6f2'], ['rnd', '#ff0069']]) {
+    const r = mm[k], tot = mm.walkable; let c = 0, pts = [[0, 0]];
+    for (const [t, cx, cy] of r.events) { c += r.walk.has(cx + ',' + cy) ? 1 : 0; pts.push([t, c / tot]); }
+    pts.push([D.budget, c / tot]);
+    const step = Math.max(1, Math.floor(pts.length / 300));
+    const d = pts.filter((_, i) => i % step === 0 || i === pts.length - 1).map((p, i) => (i ? 'L' : 'M') + x(p[0]).toFixed(1) + ' ' + y(p[1]).toFixed(1)).join(' ');
+    out += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2.4"/>`;
+    const last = pts[pts.length - 1]; out += `<circle cx="${x(last[0])}" cy="${y(last[1])}" r="4" fill="${col}"/>`;
+  }
+  out += `<line id="cur" x1="${x(T * D.budget)}" x2="${x(T * D.budget)}" y1="${Tp}" y2="${H - B}" stroke="#ffd700" stroke-dasharray="4 4"/>`;
+  svg.innerHTML = out;
+}
+function draw() {
+  const mm = D.maps[cur];
+  const nge = render($('#cv-ge'), mm.geo, mm.ge, '#00d6f2', T), nr = render($('#cv-rnd'), mm.geo, mm.rnd, '#ff0069', T);
+  const cov = (r) => { let c = 0; for (const [t, cx, cy] of r.events) if (t <= T * D.budget && r.walk.has(cx + ',' + cy)) c++; return c / mm.walkable; };
+  $('#pct-ge').textContent = pct(cov(mm.ge)); $('#pct-rnd').textContent = pct(cov(mm.rnd));
+  const mins = (T * D.budget / 35 / 60).toFixed(1);
+  $('#tlabel').textContent = `${fmt(Math.round(T * D.budget))} tics · ${mins} min game time`;
+  const foot = r => `<span>${fmt(r.cells)} cells</span><span>${r.exits.length ? 'Exit found ×' + r.exits.length : 'Exit not found'}</span><span>${r.pick_reached}/${r.pick_total} pickups reached</span>${r.findings.length ? `<span style="color:var(--mag)">${r.findings.length} finding${r.findings.length > 1 ? 's' : ''}</span>` : ''}`;
+  $('#foot-ge').innerHTML = foot(mm.ge); $('#foot-rnd').innerHTML = foot(mm.rnd);
+  curve(cur);
+}
+for (const m of maps) for (const k of ['ge', 'rnd']) D.maps[m][k].walk = new Set(D.maps[m].geo.walkable_cells.map(c => c[0] + ',' + c[1]));
+$('#scrub').addEventListener('input', e => { T = e.target.value / 1000; stop(); draw(); });
+function stop() { playing = false; cancelAnimationFrame(raf); $('#play').textContent = 'Play'; }
+$('#play').addEventListener('click', () => {
+  if (playing) return stop();
+  playing = true; $('#play').textContent = 'Pause'; if (T >= 1) T = 0;
+  let last = performance.now();
+  const tick = now => { if (!playing) return; T = Math.min(1, T + (now - last) / 9000); last = now; $('#scrub').value = Math.round(T * 1000); draw(); if (T >= 1) return stop(); raf = requestAnimationFrame(tick); };
+  raf = requestAnimationFrame(tick);
+});
+const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+const rng = a => a.length > 1 ? ` <span style="color:var(--muted)">(${(Math.min(...a) * 100).toFixed(0)}–${(Math.max(...a) * 100).toFixed(0)})</span>` : '';
+$('#cmp').innerHTML = `<tr><th>Map</th><th class="num">Walkable cells</th><th class="num">Curiosity, mean of ${D.nseeds} (range)</th><th class="num">Random, mean of ${D.nseeds} (range)</th><th class="num">Difference</th><th class="num">Runs that found the exit</th><th class="num">Pickups reached, seed 1</th></tr>` +
+  maps.map(m => { const a = D.maps[m].ge, b = D.maps[m].rnd, ma = mean(a.covs), mb = mean(b.covs), d = ma - mb; return `<tr><td>${m}</td><td class="num">${fmt(D.maps[m].walkable)}</td><td class="num">${pct(ma)}${rng(a.covs)}</td><td class="num">${pct(mb)}${rng(b.covs)}</td><td class="num ${d >= 0.02 ? 'win' : (d <= -0.02 ? 'lose' : '')}">${d >= 0 ? '+' : ''}${(d * 100).toFixed(1)} pts</td><td class="num">${a.exit_runs}/${a.covs.length} vs ${b.exit_runs}/${b.covs.length}</td><td class="num">${a.pick_reached}/${a.pick_total}</td></tr>`; }).join('');
+draw();
+
+// ---------- state graph
+(function () {
+  const S = D.states, P = { Spawn: [75, 235], Explore: [260, 80], Combat: [540, 80], Hurt: [540, 390], Pickup: [260, 390], Dead: [700, 235], LevelExit: [75, 80] };
+  const col = { Spawn: '#9aa3b2', Explore: '#00d6f2', Combat: '#ff0069', Hurt: '#ffd700', Pickup: '#3ddc97', Dead: '#ff99c3', LevelExit: '#ffd700' };
+  const seen = new Map(S.edges.map(([a, b, n]) => [a + '>' + b, n]));
+  const maxn = Math.max(...S.edges.map(e => e[2]));
+  let out = `<defs>${Object.entries(col).map(([k, c]) => `<marker id="ar-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('')}<marker id="ar-x" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a5163"/></marker></defs>`;
+  const all = new Map(); S.expected.forEach(([a, b]) => all.set(a + '>' + b, [a, b])); S.edges.forEach(([a, b]) => all.set(a + '>' + b, [a, b]));
+  const labels = [];
+  for (const [k, [a, b]] of all) {
+    const n = seen.get(k) || 0, [x1, y1] = P[a], [x2, y2] = P[b];
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+    const sx = x1 + ux * 52, sy = y1 + uy * 26, ex = x2 - ux * 56, ey = y2 - uy * 28;
+    const bend = all.has(b + '>' + a) ? 30 : 0, mx = (sx + ex) / 2 - uy * bend, my = (sy + ey) / 2 + ux * bend;
+    const w = n ? 1.2 + 3 * Math.log1p(n) / Math.log1p(maxn) : 1.3;
+    out += `<path d="M${sx},${sy} Q${mx},${my} ${ex},${ey}" fill="none" stroke="${n ? col[a] : '#4a5163'}" stroke-opacity="${n ? .85 : 1}" stroke-width="${w.toFixed(1)}" ${n ? '' : 'stroke-dasharray="5 5"'} marker-end="url(#ar-${n ? a : 'x'})"/>`;
+    labels.push(`<text x="${(sx + ex) / 2 - uy * bend * 1.15}" y="${(sy + ey) / 2 + ux * bend * 1.15 + 4}" fill="${n ? '#f4f6fa' : '#6f7688'}" font-size="12" text-anchor="middle" font-family="JetBrains Mono, monospace" paint-order="stroke" stroke="#0d0f16" stroke-width="4">${n || '0'}</text>`);
+  }
+  out += labels.join('');
+  for (const [k, [x, y]] of Object.entries(P)) {
+    const hit = S.visits[k] || 0;
+    out += `<rect x="${x - 50}" y="${y - 24}" width="100" height="48" rx="12" fill="#12141c" stroke="${hit ? col[k] : '#4a5163'}" stroke-width="1.6" ${hit ? '' : 'stroke-dasharray="5 5"'}/><text x="${x}" y="${y - 2}" fill="#f4f6fa" font-size="14" font-weight="600" text-anchor="middle" font-family="Manrope, sans-serif">${k === 'LevelExit' ? 'Level exit' : k}</text><text x="${x}" y="${y + 15}" fill="#6f7688" font-size="11" text-anchor="middle" font-family="JetBrains Mono, monospace">${hit} entries</text>`;
+  }
+  $('#sgraph').innerHTML = out;
+  const covered = S.expected.filter(([a, b]) => seen.has(a + '>' + b)).length;
+  const missing = S.expected.filter(([a, b]) => !seen.has(a + '>' + b));
+  const extra = S.edges.filter(([a, b]) => !S.expected.some(e => e[0] === a && e[1] === b));
+  $('#sside').innerHTML = `
+    <div class="card"><h3>Transition coverage</h3><div class="bar"><i style="width:${covered / S.expected.length * 100}%"></i></div>
+      <p><b style="color:var(--fg)">${covered} of ${S.expected.length}</b> expected transitions exercised across ${S.episodes} episodes on ${S.maps} maps.</p>
+      ${missing.length ? `<ul class="plain">${missing.map(([a, b]) => `<li>Not yet seen: <span class="mono" style="color:var(--fg)">${a} → ${b}</span></li>`).join('')}</ul>` : ''}</div>
+    <div class="card"><h3>Unexpected transitions</h3><p>${extra.length ? extra.map(([a, b, n]) => `${a} → ${b} (${n})`).join(', ') + ' were observed but are not in the designer graph. Each one is either a missing edge in the spec or a bug.' : 'None observed: every transition the bot made is in the designer graph.'}</p></div>
+    <div class="card"><h3>Episode outcomes</h3><p>${S.outcomes}</p></div>`;
+})();
+
+// ---------- smoke
+(function () {
+  const maxT = Math.max(...D.smoke.map(r => r.tps));
+  const keys = ['spawn', 'movement', 'weapon_fires', 'use', 'invariants', 'no_crash'];
+  $('#smoketab').innerHTML = `<tr><th>Map</th><th>Checks: spawn · move · fire · use · invariants · no crash</th><th class="num">Boot</th><th>Throughput (tics/s, serial)</th><th class="num">Lines</th><th class="num">Monsters</th><th class="num">Pickups</th><th>Keys</th></tr>` +
+    D.smoke.map(r => `<tr class="${r.slow ? 'slow' : ''}"><td>${r.map}</td><td>${keys.map(k => `<span class="dot ${r.checks[k] ? '' : 'f'}" title="${k}"></span>`).join('')} <span style="color:var(--muted);font-size:12px;margin-left:6px">${r.ok ? 'Pass' : 'Fail'}</span></td><td class="num">${r.boot_s.toFixed(2)} s</td><td><span class="tbar" style="width:${Math.max(4, r.tps / maxT * 140)}px;${r.slow ? 'background:var(--gold)' : ''}"></span>${fmt(r.tps)}</td><td class="num">${fmt(r.lines)}</td><td class="num">${r.monsters}</td><td class="num">${r.pickups}</td><td>${r.keys.length ? r.keys.map(k => k.replace('card', ' card').replace('skull', ' skull')).join(', ') : '<span style="color:var(--muted)">None</span>'}</td></tr>`).join('');
+})();
+
+// ---------- clip + mapping + footer
+$('#clipimg').src = D.clip;
+$('#cliptext').textContent = D.cliptext;
+$('#mapto').innerHTML = D.mapping.map(m => `<div class="card"><span class="tag">${esc(m.tag)}</span><h3>${esc(m.h)}</h3><p>${esc(m.p)}</p></div>`).join('');
+$('#foot').innerHTML = D.footer.map(f => `<span>${f}</span>`).join('');
+</script>
