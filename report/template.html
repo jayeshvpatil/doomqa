@@ -1,33 +1,45 @@
 <title>Freedoom QA Run</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: one run report — header, run summary, tickets, then the evidence (coverage race, transitions, smoke matrix, clip). Single dark look in the IG Labs skin. */
+/* Layout: a test-run report. Header and run summary, then tickets, then the evidence: coverage race, transitions, smoke matrix, replay.
+   Two agent colors carry through every chart: teal = curiosity agent, rust = random walk. */
 :root {
-  color-scheme: dark;
-  --bg: #05060a; --panel: #0d0f16; --panel2: #12141c; --line: #1e2230; --line2: #2b2f3c;
-  --fg: #f4f6fa; --body: #a3abb9; --muted: #6f7688;
-  --mag: #ff0069; --cyan: #00d6f2; --gold: #ffd700; --mint: #3ddc97; --pink: #ff99c3;
-  --ok: #3ddc97; --warn: #ffd700; --bad: #ff0069; --info: #00d6f2;
-  --f-ui: 'Manrope', 'Segoe UI', system-ui, sans-serif;
-  --f-mono: 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
+  --bg: #f4f5f7; --panel: #ffffff; --panel2: #eceef2; --line: #dde1e8; --line2: #c6ccd6;
+  --fg: #151821; --body: #4a5160; --muted: #6e7686;
+  --cyan: #0b7a7d; --mag: #b8410e; --gold: #7a5300; --mint: #2c7a32; --pink: #b4235a;
+  --ok: #2c7a32; --warn: #9a5f00; --bad: #c22b2b; --info: #1d5fbf;
+  --sel: #fdf0e8; --code-bg: #f0f2f5; --canvas: #fafbfc; --cellbg: #e8ebf0; --wall: #262b35; --wall2: #b9c0cc; --navbg: rgba(244,245,247,.92); --badline: #f1c4c4;
+  --f-ui: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'Courier New', monospace;
 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1014; --panel: #161920; --panel2: #1d2129; --line: #272c36; --line2: #39404d;
+  --fg: #eef1f5; --body: #b0b7c4; --muted: #828a9b;
+  --cyan: #3cc7c9; --mag: #ff8a4c; --gold: #e3b54a; --mint: #5fcf7a; --pink: #ff7aa8;
+  --ok: #5fcf7a; --warn: #e3b54a; --bad: #ff6b6b; --info: #6aa8ff;
+  --sel: #2a1d14; --code-bg: #11141a; --canvas: #0b0d11; --cellbg: #171b23; --wall: #cfd6e2; --wall2: #3b4250; --navbg: rgba(14,16,20,.92); --badline: #5a2424;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1014; --panel: #161920; --panel2: #1d2129; --line: #272c36; --line2: #39404d;
+  --fg: #eef1f5; --body: #b0b7c4; --muted: #828a9b;
+  --cyan: #3cc7c9; --mag: #ff8a4c; --gold: #e3b54a; --mint: #5fcf7a; --pink: #ff7aa8;
+  --ok: #5fcf7a; --warn: #e3b54a; --bad: #ff6b6b; --info: #6aa8ff;
+  --sel: #2a1d14; --code-bg: #11141a; --canvas: #0b0d11; --cellbg: #171b23; --wall: #cfd6e2; --wall2: #3b4250; --navbg: rgba(14,16,20,.92); --badline: #5a2424;
+  color-scheme: dark }
 * { box-sizing: border-box }
-body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.55; margin: 0;
-  background-image: radial-gradient(900px 600px at 0% 100%, rgba(255,0,105,.10), transparent 70%), radial-gradient(800px 500px at 100% 0%, rgba(0,214,242,.08), transparent 70%);
-  background-attachment: fixed; }
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: #07080d }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.55; margin: 0 }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg) }
 .wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 72px }
-nav.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: #07080dee; backdrop-filter: blur(8px); border-bottom: 1px solid var(--line) }
+nav.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--navbg); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line) }
 nav.top .in { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: 22px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; overflow-x: auto }
-.dots { display: flex; gap: 6px } .dots i { width: 9px; height: 9px; border-radius: 50%; display: block }
-.brand { font-weight: 600; white-space: nowrap }
+.brand { font-weight: 600; white-space: nowrap; font-family: var(--f-mono); font-size: 14px; letter-spacing: .02em }
 nav.top a { color: var(--body); text-decoration: none; font-size: 13px; white-space: nowrap; padding: 6px 10px; border-radius: 8px }
 nav.top a:hover, nav.top a:focus-visible { color: var(--fg); background: var(--panel2); outline: none }
 nav.top a span { color: var(--muted); margin-right: 6px; font-family: var(--f-mono); font-size: 11px }
 .eyebrow { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); font-weight: 600 }
-h1 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 500; letter-spacing: -.02em; line-height: 1.1; margin: 10px 0 14px; text-wrap: balance }
+h1 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 600; letter-spacing: -.02em; line-height: 1.1; margin: 10px 0 14px; text-wrap: balance }
 h2 { font-size: clamp(22px, 2.6vw, 28px); font-weight: 500; letter-spacing: -.01em; margin: 6px 0 8px; text-wrap: balance }
 h3 { font-size: 16px; font-weight: 600; margin: 0 }
 p { margin: 0 } .lede { color: var(--body); max-width: 70ch; font-size: 16px }
@@ -58,21 +70,21 @@ header.hero { padding-top: 44px; display: grid; grid-template-columns: minmax(0,
 .ticket figure { margin: 0; display: flex; flex-direction: column; gap: 6px }
 .ticket figure img { width: 100%; border-radius: 8px; border: 1px solid var(--line2); image-rendering: pixelated; background: #000 }
 .ticket figcaption { font-size: 12px; color: var(--muted) }
-pre.code { background: #08090e; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-family: var(--f-mono); font-size: 12px; color: var(--light, #dce7ee); overflow-x: auto; margin: 8px 0 0; white-space: pre }
+pre.code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-family: var(--f-mono); font-size: 12px; color: var(--fg); overflow-x: auto; margin: 8px 0 0; white-space: pre }
 .ev { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px }
 .ev span { font-family: var(--f-mono); font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--panel2); border: 1px solid var(--line) }
-.ev span.z { color: var(--bad); border-color: #5a1030 }
+.ev span.z { color: var(--bad); border-color: var(--badline) }
 /* coverage */
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px }
 .tabs button, .ctl button { font: inherit; font-size: 13px; color: var(--body); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer }
-.tabs button[aria-selected="true"] { color: var(--fg); border-color: var(--mag); background: #1a0711 }
+.tabs button[aria-selected="true"] { color: var(--fg); border-color: var(--mag); background: var(--sel) }
 .tabs button:focus-visible, .ctl button:focus-visible, input[type=range]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px }
 .race { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px }
 .pane { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0 }
 .pane-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap }
 .pane-h .who { font-weight: 600 } .pane-h .who i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: 0 }
 .pane-h .pct { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums }
-canvas.map { width: 100%; aspect-ratio: 1 / 1; background: #07080d; border-radius: 10px; border: 1px solid var(--line); display: block; max-width: 100% }
+canvas.map { width: 100%; aspect-ratio: 1 / 1; background: var(--canvas); border-radius: 10px; border: 1px solid var(--line); display: block; max-width: 100% }
 .pane-f { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--body) }
 .ctl { display: flex; align-items: center; gap: 12px; margin: 14px 0 6px; flex-wrap: wrap }
 .ctl input[type=range] { flex: 1; min-width: 160px; accent-color: var(--mag) }
@@ -117,25 +129,32 @@ footer { margin-top: 56px; color: var(--muted); font-size: 12px; border-top: 1px
   .map-to { grid-template-columns: minmax(0, 1fr) }
 }
 @media (max-width: 640px) { .race { grid-template-columns: minmax(0, 1fr) } .kv { grid-template-columns: minmax(0, 1fr) } }
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important }
+  html, body { background: var(--bg) !important }
+  nav.top { position: static }
+  .ctl button, .ctl input { display: none }
+  .ticket, .pane, .card, .chart, figure { break-inside: avoid }
+  section { break-before: auto }
+}
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important } }
 </style>
 
 <nav class="top" aria-label="Sections"><div class="in">
-  <div class="dots" aria-hidden="true"><i style="background:var(--cyan)"></i><i style="background:var(--gold)"></i><i style="background:var(--mag)"></i></div>
-  <div class="brand">IG Labs</div>
+  <div class="brand">doomqa</div>
   <a href="#findings"><span>01</span>Findings</a>
   <a href="#coverage"><span>02</span>Coverage race</a>
   <a href="#states"><span>03</span>State model</a>
   <a href="#smoke"><span>04</span>Smoke matrix</a>
   <a href="#clip"><span>05</span>Replay</a>
-  <a href="#mapping"><span>06</span>What this proves</a>
+  <a href="#mapping"><span>06</span>What carries over</a>
 </div></nav>
 
 <div class="wrap">
   <header class="hero">
     <div>
-      <div class="eyebrow">IG Labs · Agentic QA demo</div>
-      <h1>We pointed the agent harness at a real open-source shooter</h1>
+      <div class="eyebrow">Agentic game QA · open-source demo</div>
+      <h1>Pointing a game-testing agent harness at a real open-source shooter</h1>
       <p class="lede" id="lede"></p>
     </div>
     <dl class="runmeta" id="runmeta"></dl>
@@ -199,7 +218,7 @@ footer { margin-top: 56px; color: var(--muted); font-size: 12px; border-top: 1px
 
   <section id="clip">
     <div class="clip">
-      <div><img id="clipimg" alt="Combat bot playing MAP02, replayed from its recorded demo"></div>
+      <div><img id="clipimg" alt="Combat bot playing MAP03, replayed from its recorded demo"></div>
       <div class="sec-head" style="margin:0">
         <div class="eyebrow">05 · Replay</div>
         <h2>Every combat run is recorded as an engine demo</h2>
@@ -210,8 +229,8 @@ footer { margin-top: 56px; color: var(--muted); font-size: 12px; border-top: 1px
 
   <section id="mapping">
     <div class="sec-head">
-      <div class="eyebrow">06 · What this proves</div>
-      <h2>How the demo maps to the proposal for [Client]</h2>
+      <div class="eyebrow">06 · What carries over</div>
+      <h2>What would transfer to a larger shooter</h2>
     </div>
     <div class="map-to" id="mapto"></div>
   </section>
@@ -224,6 +243,7 @@ const D = __DATA__;
 const $ = s => document.querySelector(s);
 const fmt = n => n.toLocaleString('en-US');
 const pct = v => (v * 100).toFixed(1) + '%';
+const tok = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ---------- hero
@@ -264,7 +284,7 @@ function render(cv, geo, run, color, frac) {
   const g = setup(cv, geo), { ctx, W, H, X, Y, s } = g, cs = geo.cell * s, tmax = frac * D.budget;
   ctx.clearRect(0, 0, W, H);
   // walkable cells faint
-  ctx.fillStyle = '#10131b';
+  ctx.fillStyle = tok('--cellbg');
   for (const [cx, cy] of geo.walkable_cells) ctx.fillRect(X(g.x0 + cx * geo.cell), Y(g.y0 + (cy + 1) * geo.cell), cs, cs);
   // reached cells, brighter = earlier
   let n = 0;
@@ -278,30 +298,31 @@ function render(cv, geo, run, color, frac) {
   }
   ctx.globalAlpha = 1;
   // walls
+  const WALL = tok('--wall'), WALL2 = tok('--wall2');
   ctx.lineWidth = 1.4;
   for (const [a, b, c, d, blk] of geo.lines) {
-    ctx.strokeStyle = blk ? '#c9d2df' : '#3a4152';
+    ctx.strokeStyle = blk ? WALL : WALL2;
     ctx.beginPath(); ctx.moveTo(X(a), Y(b)); ctx.lineTo(X(c), Y(d)); ctx.stroke();
   }
   // unreached pickups (only at end)
-  if (frac >= 1) for (const p of run.unreached) { ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 5, 0, 7); ctx.stroke(); }
+  if (frac >= 1) for (const p of run.unreached) { ctx.strokeStyle = tok('--gold'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 5, 0, 7); ctx.stroke(); }
   // findings
   for (const f of run.findings) if (f.tic <= tmax) {
-    ctx.strokeStyle = f.closed ? '#6f7688' : '#ff0069'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), 16, 0, 7); ctx.stroke();
-    ctx.fillStyle = f.closed ? '#6f7688' : '#ff0069'; ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), 5, 0, 7); ctx.fill();
+    ctx.strokeStyle = f.closed ? tok('--muted') : tok('--bad'); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), 16, 0, 7); ctx.stroke();
+    ctx.fillStyle = f.closed ? tok('--muted') : tok('--bad'); ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), 5, 0, 7); ctx.fill();
   }
   // exits
-  for (const e of run.exits) if (e.tic <= tmax && e.x != null) { ctx.fillStyle = '#ffd700'; ctx.font = '600 22px Manrope, sans-serif'; ctx.fillText('EXIT', X(e.x) + 10, Y(e.y) - 10); }
+  for (const e of run.exits) if (e.tic <= tmax && e.x != null) { ctx.fillStyle = tok('--gold'); ctx.font = '600 22px "IBM Plex Sans", sans-serif'; ctx.fillText('EXIT', X(e.x) + 10, Y(e.y) - 10); }
   return n;
 }
 function curve(m) {
   const svg = $('#curve'), W = 1000, H = 240, L = 46, R = 12, Tp = 12, B = 30, mm = D.maps[m];
   const x = t => L + (t / D.budget) * (W - L - R), y = v => Tp + (1 - v) * (H - Tp - B);
   let out = '';
-  for (const v of [0, .25, .5, .75, 1]) out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#1e2230"/><text x="${L - 8}" y="${y(v) + 4}" fill="#6f7688" font-size="11" text-anchor="end" font-family="JetBrains Mono, monospace">${v * 100}%</text>`;
+  for (const v of [0, .25, .5, .75, 1]) out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${tok('--line')}"/><text x="${L - 8}" y="${y(v) + 4}" fill="${tok('--muted')}" font-size="11" text-anchor="end" font-family="IBM Plex Mono, monospace">${v * 100}%</text>`;
   const hours = D.budget / 35 / 3600;
-  for (let i = 0; i <= 4; i++) { const t = D.budget * i / 4; out += `<text x="${x(t)}" y="${H - 8}" fill="#6f7688" font-size="11" text-anchor="${i === 4 ? 'end' : (i === 0 ? 'start' : 'middle')}" font-family="JetBrains Mono, monospace">${(hours * i / 4 * 60).toFixed(0)} min</text>`; }
-  for (const [k, col] of [['ge', '#00d6f2'], ['rnd', '#ff0069']]) {
+  for (let i = 0; i <= 4; i++) { const t = D.budget * i / 4; out += `<text x="${x(t)}" y="${H - 8}" fill="${tok('--muted')}" font-size="11" text-anchor="${i === 4 ? 'end' : (i === 0 ? 'start' : 'middle')}" font-family="IBM Plex Mono, monospace">${(hours * i / 4 * 60).toFixed(0)} min</text>`; }
+  for (const [k, col] of [['ge', tok('--cyan')], ['rnd', tok('--mag')]]) {
     const r = mm[k], tot = mm.walkable; let c = 0, pts = [[0, 0]];
     for (const [t, cx, cy] of r.events) { c += r.walk.has(cx + ',' + cy) ? 1 : 0; pts.push([t, c / tot]); }
     pts.push([D.budget, c / tot]);
@@ -310,12 +331,12 @@ function curve(m) {
     out += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2.4"/>`;
     const last = pts[pts.length - 1]; out += `<circle cx="${x(last[0])}" cy="${y(last[1])}" r="4" fill="${col}"/>`;
   }
-  out += `<line id="cur" x1="${x(T * D.budget)}" x2="${x(T * D.budget)}" y1="${Tp}" y2="${H - B}" stroke="#ffd700" stroke-dasharray="4 4"/>`;
+  out += `<line id="cur" x1="${x(T * D.budget)}" x2="${x(T * D.budget)}" y1="${Tp}" y2="${H - B}" stroke="${tok('--gold')}" stroke-dasharray="4 4"/>`;
   svg.innerHTML = out;
 }
 function draw() {
   const mm = D.maps[cur];
-  const nge = render($('#cv-ge'), mm.geo, mm.ge, '#00d6f2', T), nr = render($('#cv-rnd'), mm.geo, mm.rnd, '#ff0069', T);
+  const nge = render($('#cv-ge'), mm.geo, mm.ge, tok('--cyan'), T), nr = render($('#cv-rnd'), mm.geo, mm.rnd, tok('--mag'), T);
   const cov = (r) => { let c = 0; for (const [t, cx, cy] of r.events) if (t <= T * D.budget && r.walk.has(cx + ',' + cy)) c++; return c / mm.walkable; };
   $('#pct-ge').textContent = pct(cov(mm.ge)); $('#pct-rnd').textContent = pct(cov(mm.rnd));
   const mins = (T * D.budget / 35 / 60).toFixed(1);
@@ -341,12 +362,13 @@ $('#cmp').innerHTML = `<tr><th>Map</th><th class="num">Walkable cells</th><th cl
 draw();
 
 // ---------- state graph
-(function () {
+function drawGraph() {
   const S = D.states, P = { Spawn: [75, 235], Explore: [260, 80], Combat: [540, 80], Hurt: [540, 390], Pickup: [260, 390], Dead: [700, 235], LevelExit: [75, 80] };
-  const col = { Spawn: '#9aa3b2', Explore: '#00d6f2', Combat: '#ff0069', Hurt: '#ffd700', Pickup: '#3ddc97', Dead: '#ff99c3', LevelExit: '#ffd700' };
+  const col = { Spawn: tok('--muted'), Explore: tok('--cyan'), Combat: tok('--mag'), Hurt: tok('--gold'), Pickup: tok('--mint'), Dead: tok('--pink'), LevelExit: tok('--gold') };
+  const L2 = tok('--line2'), FG = tok('--fg'), MU = tok('--muted'), PN = tok('--panel'), P2 = tok('--panel2');
   const seen = new Map(S.edges.map(([a, b, n]) => [a + '>' + b, n]));
   const maxn = Math.max(...S.edges.map(e => e[2]));
-  let out = `<defs>${Object.entries(col).map(([k, c]) => `<marker id="ar-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('')}<marker id="ar-x" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a5163"/></marker></defs>`;
+  let out = `<defs>${Object.entries(col).map(([k, c]) => `<marker id="ar-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('')}<marker id="ar-x" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${L2}"/></marker></defs>`;
   const all = new Map(); S.expected.forEach(([a, b]) => all.set(a + '>' + b, [a, b])); S.edges.forEach(([a, b]) => all.set(a + '>' + b, [a, b]));
   const labels = [];
   for (const [k, [a, b]] of all) {
@@ -355,13 +377,13 @@ draw();
     const sx = x1 + ux * 52, sy = y1 + uy * 26, ex = x2 - ux * 56, ey = y2 - uy * 28;
     const bend = all.has(b + '>' + a) ? 30 : 0, mx = (sx + ex) / 2 - uy * bend, my = (sy + ey) / 2 + ux * bend;
     const w = n ? 1.2 + 3 * Math.log1p(n) / Math.log1p(maxn) : 1.3;
-    out += `<path d="M${sx},${sy} Q${mx},${my} ${ex},${ey}" fill="none" stroke="${n ? col[a] : '#4a5163'}" stroke-opacity="${n ? .85 : 1}" stroke-width="${w.toFixed(1)}" ${n ? '' : 'stroke-dasharray="5 5"'} marker-end="url(#ar-${n ? a : 'x'})"/>`;
-    labels.push(`<text x="${(sx + ex) / 2 - uy * bend * 1.15}" y="${(sy + ey) / 2 + ux * bend * 1.15 + 4}" fill="${n ? '#f4f6fa' : '#6f7688'}" font-size="12" text-anchor="middle" font-family="JetBrains Mono, monospace" paint-order="stroke" stroke="#0d0f16" stroke-width="4">${n || '0'}</text>`);
+    out += `<path d="M${sx},${sy} Q${mx},${my} ${ex},${ey}" fill="none" stroke="${n ? col[a] : L2}" stroke-opacity="${n ? .85 : 1}" stroke-width="${w.toFixed(1)}" ${n ? '' : 'stroke-dasharray="5 5"'} marker-end="url(#ar-${n ? a : 'x'})"/>`;
+    labels.push(`<text x="${(sx + ex) / 2 - uy * bend * 1.15}" y="${(sy + ey) / 2 + ux * bend * 1.15 + 4}" fill="${n ? FG : MU}" font-size="12" text-anchor="middle" font-family="IBM Plex Mono, monospace" paint-order="stroke" stroke="${PN}" stroke-width="4">${n || '0'}</text>`);
   }
   out += labels.join('');
   for (const [k, [x, y]] of Object.entries(P)) {
     const hit = S.visits[k] || 0;
-    out += `<rect x="${x - 50}" y="${y - 24}" width="100" height="48" rx="12" fill="#12141c" stroke="${hit ? col[k] : '#4a5163'}" stroke-width="1.6" ${hit ? '' : 'stroke-dasharray="5 5"'}/><text x="${x}" y="${y - 2}" fill="#f4f6fa" font-size="14" font-weight="600" text-anchor="middle" font-family="Manrope, sans-serif">${k === 'LevelExit' ? 'Level exit' : k}</text><text x="${x}" y="${y + 15}" fill="#6f7688" font-size="11" text-anchor="middle" font-family="JetBrains Mono, monospace">${hit} entries</text>`;
+    out += `<rect x="${x - 50}" y="${y - 24}" width="100" height="48" rx="12" fill="${P2}" stroke="${hit ? col[k] : L2}" stroke-width="1.6" ${hit ? '' : 'stroke-dasharray="5 5"'}/><text x="${x}" y="${y - 2}" fill="${FG}" font-size="14" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans, sans-serif">${k === 'LevelExit' ? 'Level exit' : k}</text><text x="${x}" y="${y + 15}" fill="${MU}" font-size="11" text-anchor="middle" font-family="IBM Plex Mono, monospace">${hit} entries</text>`;
   }
   $('#sgraph').innerHTML = out;
   const covered = S.expected.filter(([a, b]) => seen.has(a + '>' + b)).length;
@@ -373,7 +395,13 @@ draw();
       ${missing.length ? `<ul class="plain">${missing.map(([a, b]) => `<li>Not yet seen: <span class="mono" style="color:var(--fg)">${a} → ${b}</span></li>`).join('')}</ul>` : ''}</div>
     <div class="card"><h3>Unexpected transitions</h3><p>${extra.length ? extra.map(([a, b, n]) => `${a} → ${b} (${n})`).join(', ') + ' were observed but are not in the designer graph. Each one is either a missing edge in the spec or a bug.' : 'None observed: every transition the bot made is in the designer graph.'}</p></div>
     <div class="card"><h3>Episode outcomes</h3><p>${S.outcomes}</p></div>`;
-})();
+}
+drawGraph();
+// redraw canvases and SVG when the theme changes
+const rerender = () => { draw(); drawGraph(); };
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rerender); } catch (e) {}
+new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(rerender);
 
 // ---------- smoke
 (function () {

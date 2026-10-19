@@ -1,5 +1,8 @@
 """Determinism suite: what can a bug report rely on to reproduce a run?"""
-import math, numpy as np
+import math, tempfile
+import numpy as np
+
+TMP = tempfile.mkdtemp(prefix='doomqa_det_')
 from .env import make_game, start_episode, read, ACTIONS, NOOP, FRAME_SKIP
 
 
@@ -21,14 +24,14 @@ def run():
     g = make_game('MAP01', god=False, skill=1)
     fresh = []
     for k in range(3):
-        g.new_episode(f'/tmp/det_{k}.lmp')   # plain episode start, no idle tic, so monsters engage early
+        g.new_episode(f'{TMP}/det_{k}.lmp')   # plain episode start, no idle tic, so monsters engage early
         for a in acts:
             g.make_action(ACTIONS[a], FRAME_SKIP)
         fresh.append(_pos(g))
     g.new_episode()
     reps = []
     for k in range(3):
-        g.replay_episode(f'/tmp/det_{k}.lmp')
+        g.replay_episode(f'{TMP}/det_{k}.lmp')
         last = None
         while not g.is_episode_finished():
             last = _pos(g) or last
@@ -39,15 +42,15 @@ def run():
     out['demo_replay'] = dict(replays=reps, matches_original=[r == f for r, f in zip(reps, fresh)])
     # 2. repeated loads of one save: does input still register?
     raw = []
-    g = make_game('MAP01', god=True); start_episode(g); g.save('/tmp/det.sav')
+    g = make_game('MAP01', god=True); start_episode(g); g.save(f'{TMP}/det.sav')
     for k in range(4):
-        g.load('/tmp/det.sav'); a = read(g)
+        g.load(f'{TMP}/det.sav'); a = read(g)
         for i in range(20):
             g.make_action(ACTIONS['fwd'], FRAME_SKIP)
         b = read(g); raw.append(round(math.hypot(b['x'] - a['x'], b['y'] - a['y'])))
     fixed = []
     for k in range(4):
-        g.load('/tmp/det.sav'); g.make_action(NOOP, 1); a = read(g)
+        g.load(f'{TMP}/det.sav'); g.make_action(NOOP, 1); a = read(g)
         for i in range(20):
             g.make_action(ACTIONS['fwd'], FRAME_SKIP)
         b = read(g); fixed.append(round(math.hypot(b['x'] - a['x'], b['y'] - a['y'])))
@@ -57,11 +60,11 @@ def run():
     g = make_game('MAP01', god=True); start_episode(g)
     for a in acts[:60]:
         g.make_action(ACTIONS[a], FRAME_SKIP)
-    g.save('/tmp/det2.sav')
+    g.save(f'{TMP}/det2.sav')
     for a in acts[60:]:
         g.make_action(ACTIONS[a], FRAME_SKIP)
     live = _pos(g)
-    g.load('/tmp/det2.sav'); g.make_action(NOOP, 1)
+    g.load(f'{TMP}/det2.sav'); g.make_action(NOOP, 1)
     for a in acts[60:]:
         g.make_action(ACTIONS[a], FRAME_SKIP)
     loaded = _pos(g)

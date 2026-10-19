@@ -58,7 +58,7 @@ T.append(dict(id='QA-001', area='Engine · ViZDoom 1.3.2', sev='high', sevLabel=
              [(f'with 1 idle tic: {li["with_idle_tic"][0]} units every load', False)],
     kv=[('Expected', 'Each load followed by 20 forward steps moves the player the same distance.'),
         ('Workaround', 'Run one idle tic after every load (applied in the harness, see doomqa/env.py).'),
-        ('Checked', 'Documented save/load API does not mention it; the upstream issue tracker was not reachable from this environment.')],
+        ('Upstream', 'Not mentioned in the documented save/load API. The ViZDoom issue tracker has not been searched yet; worth checking before filing.')],
     code="g.save('s.sav')\nfor i in range(4):\n    g.load('s.sav')\n    for _ in range(20):\n        g.make_action(FORWARD, 4)   # 4 tics per step\n# distance moved per load: %s" % ', '.join(map(str, li['displacement_per_load']))))
 
 sf = det['save_fidelity']
@@ -107,9 +107,9 @@ if stuck:
     n += 1
 
 # closed false positive from the first campaign
-fp_img = '/tmp/f3.png'
+fp_img = os.path.join(OUT, 'shots', 'MAP04-floor-fp.png')
 if os.path.exists(fp_img):
-    im = Image.open(fp_img).crop((0, 0, 320, 240)); p = '/tmp/fp.png'; im.save(p)
+    p = fp_img
     T.append(dict(id=f'QA-{n:03d}', area='MAP04 · harness', sev='info', sevLabel='Closed · harness bug', status='closed', repro_ok=False,
         reproLabel='Closed during triage',
         title='“Player below the floor” on MAP04 was our own lookup error',
@@ -185,16 +185,16 @@ D['cliptext'] = (f'This clip is not a screen recording of the original run. It i
                  'That is the repro a developer gets attached to a ticket.')
 D['covnote'] = 'MAP06 hits the same ceiling in every run for both agents (19.2–19.3%): the area reachable from spawn stays closed until something is triggered that neither agent finds. That is the cue for a goal-directed persona (keys, switches) rather than more exploration time.'
 D['mapping'] = [
-    dict(tag='Deck: scripted bots', h='Smoke bot on 32 maps', p='Boot, spawn, move, fire, use and invariant checks per map in about a second each. The per-commit tier.'),
-    dict(tag='Deck: curiosity agents', h='Go-Explore with novelty weighting', p=f'Returns to rarely visited cells through save states. Over {nseeds} seeds it beat random walk on {wins} of 6 maps at equal budget, lost on {loss}, and tied on {6 - wins - loss}.'),
-    dict(tag='Deck: state model', h='Transition coverage from the combat bot', p='Player states classified each step and counted against a designer graph, so gaps (no level exit, few pickups) show up as missing edges.'),
-    dict(tag='Deck: invariants', h='Checks on every step', p='Ammo, health, armor ranges, monotonic kill and item counts, inside-the-map and above-the-floor geometry checks.'),
-    dict(tag='Deck: triage agent', h='Re-run before filing', p=f'Each candidate is replayed from its save state in a fresh process, and stuck spots get an escape test and a check for nearby monsters. {n_closed} of {n_cand} candidates were closed: {n_closed - 1} test artifacts and one bug in our own checks.'),
-    dict(tag='For [Client]’s engine', h='What changes on a real shooter', p='Swap ViZDoom for an agent API into the client’s build (on Unreal: Gauntlet sessions, NetEmulation). The harness, checks and triage flow stay the same.'),
+    dict(tag='Per-commit tier', h='Scripted smoke bot', p='Boot, spawn, move, fire, use and invariant checks on all 32 maps in about a second each. Cheap enough to gate every build.'),
+    dict(tag='Exploration', h='Go-Explore with novelty weighting', p=f'Returns to rarely visited cells through save states. Over {nseeds} seeds it beat random walk on {wins} of 6 maps at equal budget, lost on {loss}, and tied on {6 - wins - loss}. Maps gated by keys or switches need a goal-seeking agent instead.'),
+    dict(tag='State coverage', h='Transitions against a designer graph', p='Player states are classified each step and counted against the transitions a designer expects, so gaps (no level exit, few pickups) show up as missing edges.'),
+    dict(tag='Invariants', h='Checks on every step', p='Ammo, health and armor ranges, monotonic kill and item counts, and inside-the-map and above-the-floor geometry checks.'),
+    dict(tag='Triage', h='Re-run before filing', p=f'Each candidate is replayed from its save state in a fresh process, and stuck spots get an escape test and a nearby-monster check. {n_closed} of {n_cand} candidates were closed: {n_closed - 1} test artifacts and one bug in our own checks.'),
+    dict(tag='Other engines', h='What changes on a bigger game', p='Replace the ViZDoom wrapper with an agent API into the game build: state read-out, actions, save/restore and replay capture (on Unreal, Gauntlet sessions plus network emulation). The checks, agents and triage flow keep their shape.'),
 ]
 D['footer'] = ['Freedoom (freedoom.github.io) and ViZDoom (vizdoom.farama.org) are open source. Exploration follows Go-Explore (Ecoffet et al., Nature 2021) and EA SEED’s count-based curiosity testing (Gordillo et al., CoG 2021).',
                'Coverage counts 64-unit map cells whose area is at least half inside a sector; some of those cells are decorative or deliberately unreachable, so 100% is not attainable. Exploration runs use god mode so agents aren’t killed; combat runs do not.',
-               'Harness code, raw results, demos and save files are in the attached archive.']
+               'Harness code, raw results, demo recordings and repro save files are in the repository alongside this page.']
 
 html = open('report/template.html').read().replace('__DATA__', json.dumps(D, separators=(',', ':')))
 open('report/index.html', 'w').write(html)
